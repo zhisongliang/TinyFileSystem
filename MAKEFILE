@@ -1,0 +1,14 @@
+CC = gcc
+CFLAGS = -Wall -Werror -g -O2
+LIBS = -lm
+
+all: tinyFsDemo
+
+libDisk.o: libDisk.c libDisk.h
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+libTinyFS.o: libTinyFS.c libTinyFS.h
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+clean: 
+	rm -f *.o tinyFsDemo
