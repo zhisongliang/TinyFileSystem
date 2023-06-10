@@ -17,3 +17,8 @@ int tfs_write(fileDescriptor FD, char *buffer, int size);
 int tfs_delete(fileDescriptor FD);
 int tfs_readByte(fileDescriptor FD, char *buffer);
 int tfs_seek(fileDescriptor FD, int offset);
+
+int tfs_rename(fileDescriptor FD, char *newName)
+{
+    
+}
