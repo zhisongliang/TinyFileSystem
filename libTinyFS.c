@@ -1,4 +1,5 @@
 // libTinyFS interface file. This file will access libDisk for disk emulator functionality.
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,7 +9,13 @@
 #include "libDisk.h"
 #include "ERRORNO.h"
 
-int tfs_mkfs(char *filename, int nBytes);
+int tfs_mkfs(char *filename, int nBytes)
+{
+    int file = openDisk(filename, nBytes);
+
+    return 0;
+}
+
 int tfs_mount(char *filename);
 int tfs_unmount(void);
 fileDescriptor tfs_openFile(char *name);
@@ -20,5 +27,4 @@ int tfs_seek(fileDescriptor FD, int offset);
 
 int tfs_rename(fileDescriptor FD, char *newName)
 {
-    
 }

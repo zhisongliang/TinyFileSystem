@@ -1,6 +1,33 @@
 #ifndef LIBTINYFS_H
 #define LIBTINYFS_H
 
+// disk block may be any of these types
+/* superblock
+ * must contain magic number,
+ * poitner to root directory,
+ * and free block list implementation
+ * number possible: 1
+ * size: 256 bytes
+ */
+
+/* inode
+ * the file size and a data block indexing implementation
+ * number possible: many
+ * size: 256 bytes
+ */
+
+/* data
+ * contains actual data of a file
+ * number possible: many
+ * size: 256 bytes
+ */
+
+/* free
+ * An unallocated block
+ * number possible: many
+ * size: 256 bytes
+ */
+
 /* The default size of the disk and file system block */
 #define BLOCKSIZE 256
 /* Your program should use a 10240 byte disk size giving you 40 blocks total. This is the default size. You must be able to support different possible values, or report an error if it exceeds the limits of your implementation. */
@@ -37,7 +64,7 @@ int tfs_seek(fileDescriptor FD, int offset);
 /* renames a file.  New name should be passed in. */
 int tfs_rename(fileDescriptor FD, char *newName);
 
- /* lists all the files and directories on the disk */
+/* lists all the files and directories on the disk */
 void tfs_readdir();
 
 #endif
