@@ -1,32 +1,8 @@
 #ifndef LIBTINYFS_H
 #define LIBTINYFS_H
 
-// disk block may be any of these types
-/* superblock
- * must contain magic number,
- * poitner to root directory,
- * and free block list implementation
- * number possible: 1
- * size: 256 bytes
- */
-
-/* inode
- * the file size and a data block indexing implementation
- * number possible: many
- * size: 256 bytes
- */
-
-/* data
- * contains actual data of a file
- * number possible: many
- * size: 256 bytes
- */
-
-/* free
- * An unallocated block
- * number possible: many
- * size: 256 bytes
- */
+/* used for detecting when the disk has a formatted file system available to be mounted. It is to be found exactly on the first byte of the superblock */
+#define MAGICNUMBER 0x5A
 
 /* The default size of the disk and file system block */
 #define BLOCKSIZE 256
