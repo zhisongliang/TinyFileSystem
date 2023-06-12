@@ -1,11 +1,17 @@
 #ifndef LIBTINYFS_H
 #define LIBTINYFS_H
 
+/* block type code */
+#define SUPERBLOCK_CODE 1
+#define INODE_CODE 2
+#define DATA_CODE 3
+#define FREE_BLOCK_CODE 4
+
 /* used for detecting when the disk has a formatted file system available to be mounted. It is to be found exactly on the first byte of the superblock */
 #define MAGICNUMBER 0x5A
-#define SUPERBLOCK_IDX 0x00
-#define ROOT_INODE_IDX 0x01
-#define MAX_OPEN_FILE_NUM 20
+#define SUPERBLOCK_IDX 0
+#define ROOT_INODE_IDX 1
+#define MAX_FILE_NUM 10
 #define MAX_FILE_NAME_LEN 8
 
 /* The default size of the disk and file system block */
@@ -15,6 +21,17 @@
 /* use this name for a default disk file name */
 #define DEFUALT_DISK_NAME "tinyFSDisk"
 typedef int fileDescriptor;
+
+typedef struct
+{
+    uint8_t block[BLOCKSIZE];
+} Block_FS;
+
+typedef struct
+{
+    int inode_idx;
+    char filename[MAX_FILE_NAME_LEN + 1]; // 8 characters + 1 null terminator
+} Name_Inode_Pair;
 
 /* Makes an empty TinyFS file system of size nBytes on the file specified by ‘filename’. This function should use the emulated disk library to open the specified file, and upon success, format the file to be mountable. This includes initializing all data to 0x00, setting magic numbers, initializing and writing the superblock and other metadata, etc. Must return a specified success/error code. */
 int tfs_mkfs(char *filename, int nBytes);

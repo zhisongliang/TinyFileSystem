@@ -13,8 +13,17 @@
 #define DISK_MOUNTED 1
 #define DISK_UNMOUNTED -1
 
+char *cur_fs = "";
 fileDescriptor cur_disk;
 fileDescriptor mountDisk = DISK_MOUNTED;
+
+int free_block_table[];
+
+// helper functions
+void initSuperBlock(Block_FS *superblock, unsigned char first_free, int nBytes);
+void initInode(Block_FS *inode, int file_size, unsigned char data_block_idx);
+void serialize_Name_Inode_Pair(const Name_Inode_Pair *pair, uint8_t *buffer);
+void deserialize_Name_Inode_Pair(const uint8_t *buffer, Name_Inode_Pair *pair);
 
 /* Makes an empty TinyFS file system of size nBytes on the file specified by ‘filename’. This function should use the emulated disk library to open the specified file, and upon success, format the file to be mountable. This includes initializing all data to 0x00, setting magic numbers, initializing and writing the superblock and other metadata, etc. Must return a specified success/error code. */
 int tfs_mkfs(char *filename, int nBytes)
@@ -28,39 +37,102 @@ int tfs_mkfs(char *filename, int nBytes)
     }
 
     // initialize superblock
-    uint8_t superblock[BLOCKSIZE];
-    int i;
-    for (i = 0; i < BLOCKSIZE; i++)
-    {
-        superblock[i] = 0x00;
-    }
-
-    // set magic number
-    superblock[0] = MAGICNUMBER;
+    Block_FS superblock;
+    initSuperBlock(&superblock, 0, nBytes);
 
     // initialize and write superblock and other metadata
-    if (writeBlock(fd, 0, superblock) < 0)
+    if (writeBlock(fd, 0, superblock.block) < 0)
     {
         return FILEW_ERR;
     }
 
-    // write other blocks
     int num_blocks = nBytes / BLOCKSIZE;
     int i;
 
-    /* Todo: inode, data, free block */
-    for (i = 1; i < num_blocks; i++)
+    // initialize root directory inode
+    Block_FS root_inode;
+    for (i = 0; i < BLOCKSIZE; i++)
     {
-        uint8_t block[BLOCKSIZE];
+        root_inode.block[i] = 0x00;
+    }
+
+    // root inode cannot handle that much files
+    if (MAX_FILE_NUM * sizeof(Name_Inode_Pair) > BLOCKSIZE)
+    {
+        return REACH_FILE_LIMIT_ERR;
+    }
+
+    root_inode.block[0] = INODE_CODE;
+    Name_Inode_Pair name_inode_pairs[MAX_FILE_NUM];
+    for (i = 0; i < MAX_FILE_NUM; i++)
+    {
+        name_inode_pairs[i].inode_idx = -1;
+        strcpy(name_inode_pairs[i].filename, "");
+    }
+
+    // serialize name-inode pairs into root inode
+    // skip first byte
+    for (i = 1; i < BLOCKSIZE; i += sizeof(Name_Inode_Pair))
+    {
+        serialize_Name_Inode_Pair(&name_inode_pairs[i / sizeof(Name_Inode_Pair)], root_inode.block + i);
+    }
+
+    // write free blocks to the rest of the disk
+    for (i = 2; i < num_blocks; i++)
+    {
+        Block_FS free_block[BLOCKSIZE];
+        free_block->block[0] = FREE_BLOCK_CODE;
+
+        for (i = 1; i < BLOCKSIZE; i++)
+        {
+            root_inode.block[i] = 0x00;
+        }
 
         // write block
-        if (writeBlock(fd, i, block) < 0)
+        if (writeBlock(fd, i, free_block) < 0)
         {
             return FILEW_ERR;
         }
     }
 
     return SUCCESS;
+}
+
+void initSuperBlock(Block_FS *superblock, unsigned char first_free, int nBytes)
+{
+    int i;
+    for (i = 0; i < BLOCKSIZE; i++)
+    {
+        superblock->block[i] = 0x00;
+    }
+
+    // set superblock code
+    superblock->block[0] = SUPERBLOCK_CODE;
+    // set magic number
+    superblock->block[1] = MAGICNUMBER;
+    // set pointer to root inode
+    superblock->block[2] = ROOT_INODE_IDX;
+    // set pointer to free block table
+    superblock->block[3] = 2;
+}
+
+void initInode(Block_FS *inode, int file_size, unsigned char data_block_idx)
+{
+    int i;
+    for (i = 0; i < BLOCKSIZE; i++)
+    {
+        inode->block[i] = 0x00;
+    }
+}
+
+void serialize_Name_Inode_Pair(const Name_Inode_Pair *pair, uint8_t *buffer)
+{
+    memcpy(buffer, pair, sizeof(Name_Inode_Pair));
+}
+
+void deserialize_Name_Inode_Pair(const uint8_t *buffer, Name_Inode_Pair *pair)
+{
+    memcpy(pair, buffer, sizeof(Name_Inode_Pair));
 }
 
 /* tfs_mount(char *filename) “mounts” a TinyFS file system located within ‘filename’. tfs_unmount(void) “unmounts” the currently mounted file system. As part of the mount operation, tfs_mount should verify the file system is the correct type. Only one file system may be mounted at a time. Use tfs_unmount to cleanly unmount the currently mounted file system. Must return a specified success/error code. */
