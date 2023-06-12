@@ -10,5 +10,8 @@ libDisk.o: libDisk.c libDisk.h
 libTinyFS.o: libTinyFS.c libTinyFS.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
+tinyFsDemo.o: tinyFsDemo.c libTinyFS.h
+	$(CC) $(CFLAGS) -c -o $@ $<
+
 clean: 
 	rm -f *.o tinyFsDemo
