@@ -17,10 +17,12 @@ char *cur_fs = "";
 fileDescriptor cur_disk;
 fileDescriptor mountDisk = DISK_MOUNTED;
 
-int free_block_table[];
+File resourceTable[MAX_FILE_NUM];
 
-// helper functions
+// ******* Helper functions prototypes ********
+int fd_seek(fileDescriptor FD);
 void initSuperBlock(Block_FS *superblock, unsigned char first_free, int nBytes);
+void initRootInode(Block_FS *root_inode);
 void initInode(Block_FS *inode, int file_size, unsigned char data_block_idx);
 void serialize_Name_Inode_Pair(const Name_Inode_Pair *pair, uint8_t *buffer);
 void deserialize_Name_Inode_Pair(const uint8_t *buffer, Name_Inode_Pair *pair);
@@ -51,31 +53,7 @@ int tfs_mkfs(char *filename, int nBytes)
 
     // initialize root directory inode
     Block_FS root_inode;
-    for (i = 0; i < BLOCKSIZE; i++)
-    {
-        root_inode.block[i] = 0x00;
-    }
-
-    // root inode cannot handle that much files
-    if (MAX_FILE_NUM * sizeof(Name_Inode_Pair) > BLOCKSIZE)
-    {
-        return REACH_FILE_LIMIT_ERR;
-    }
-
-    root_inode.block[0] = INODE_CODE;
-    Name_Inode_Pair name_inode_pairs[MAX_FILE_NUM];
-    for (i = 0; i < MAX_FILE_NUM; i++)
-    {
-        name_inode_pairs[i].inode_idx = -1;
-        strcpy(name_inode_pairs[i].filename, "");
-    }
-
-    // serialize name-inode pairs into root inode
-    // skip first byte
-    for (i = 1; i < BLOCKSIZE; i += sizeof(Name_Inode_Pair))
-    {
-        serialize_Name_Inode_Pair(&name_inode_pairs[i / sizeof(Name_Inode_Pair)], root_inode.block + i);
-    }
+    initRootInode(&root_inode);
 
     // write free blocks to the rest of the disk
     for (i = 2; i < num_blocks; i++)
@@ -114,6 +92,36 @@ void initSuperBlock(Block_FS *superblock, unsigned char first_free, int nBytes)
     superblock->block[2] = ROOT_INODE_IDX;
     // set pointer to free block table
     superblock->block[3] = 2;
+}
+
+void initRootInode(Block_FS *root_inode)
+{
+    int i;
+    for (i = 0; i < BLOCKSIZE; i++)
+    {
+        root_inode->block[i] = 0x00;
+    }
+
+    // root inode cannot handle that much files
+    if (MAX_FILE_NUM * sizeof(Name_Inode_Pair) > BLOCKSIZE)
+    {
+        return REACH_FILE_LIMIT_ERR;
+    }
+
+    root_inode->block[0] = INODE_CODE;
+    Name_Inode_Pair name_inode_pairs[MAX_FILE_NUM];
+    for (i = 0; i < MAX_FILE_NUM; i++)
+    {
+        name_inode_pairs[i].inode_idx = -1;
+        strcpy(name_inode_pairs[i].filename, "");
+    }
+
+    // serialize name-inode pairs into root inode
+    // skip first byte
+    for (i = 1; i < BLOCKSIZE; i += sizeof(Name_Inode_Pair))
+    {
+        serialize_Name_Inode_Pair(&name_inode_pairs[i / sizeof(Name_Inode_Pair)], root_inode->block + i);
+    }
 }
 
 void initInode(Block_FS *inode, int file_size, unsigned char data_block_idx)
@@ -181,16 +189,44 @@ int tfs_unmount(void)
     return SUCCESS;
 }
 
+/* return index of fd in resourceTable
+if not found, return -1 */
+int fd_seek(fileDescriptor FD)
+{
+    int i;
+    for (i = 0; i < MAX_FILE_NUM; i++)
+    {
+        if (resourceTable[i].fd = FD)
+            return i;
+    }
+    // not found
+    return -1;
+}
+
 /* Opens a file for reading and writing on the currently mounted file system. Creates a dynamic resource table entry for the file (the structure that tracks open files, the internal file pointer, etc.), and returns a file descriptor (integer) that can be used to reference this file while the filesystem is mounted. */
 fileDescriptor tfs_openFile(char *name)
 {
+    // check if there is a disk mounted
+    if (mountDisk == DISK_UNMOUNTED)
+    {
+        return NO_MOUNTED_ERR;
+    }
+
+    // check if the file is already opened
+
     return 0;
 }
 
 /* Closes the file and removes dynamic resource table entry */
 int tfs_close(fileDescriptor FD)
 {
-    return 0;
+    int i = fd_seek(FD);
+    if (i < 0)
+    {
+        return FILE_NOT_FOUND_ERR;
+    }
+    resourceTable[i].fd = -1;
+    return SUCCESS;
 }
 
 /* Writes buffer ‘buffer’ of size ‘size’, which represents an entire file’s contents, to the file described by ‘FD’. Sets the file pointer to 0 (the start of file) when done. Returns success/error codes. */
@@ -214,7 +250,13 @@ int tfs_readByte(fileDescriptor FD, char *buffer)
 /* change the file pointer location to offset (absolute). Returns success/error codes.*/
 int tfs_seek(fileDescriptor FD, int offset)
 {
-    return 0;
+    int i = fd_seek(FD);
+    if (i < 0)
+    {
+        return FILE_NOT_FOUND_ERR;
+    }
+    resourceTable[i].file_ptr = offset;
+    return SUCCESS;
 }
 
 int tfs_rename(fileDescriptor FD, char *newName)

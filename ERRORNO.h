@@ -7,3 +7,4 @@
 #define MAGICNUM_INVALID_ERR -6 // magic number is invalid
 #define NO_MOUNTED_ERR -7       // NO file mounted
 #define REACH_FILE_LIMIT_ERR -8 // reach file limit
+#define FILE_NOT_FOUND_ERR -9   // file not found

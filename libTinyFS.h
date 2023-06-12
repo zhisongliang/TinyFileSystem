@@ -33,6 +33,13 @@ typedef struct
     char filename[MAX_FILE_NAME_LEN + 1]; // 8 characters + 1 null terminator
 } Name_Inode_Pair;
 
+typedef struct
+{
+    fileDescriptor fd;
+    int inode_idx;
+    int file_ptr; // current file pointer, when the file is opened, it is set to 0
+} File;
+
 /* Makes an empty TinyFS file system of size nBytes on the file specified by ‘filename’. This function should use the emulated disk library to open the specified file, and upon success, format the file to be mountable. This includes initializing all data to 0x00, setting magic numbers, initializing and writing the superblock and other metadata, etc. Must return a specified success/error code. */
 int tfs_mkfs(char *filename, int nBytes);
 
