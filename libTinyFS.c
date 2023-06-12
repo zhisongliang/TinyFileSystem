@@ -230,15 +230,28 @@ int tfs_close(fileDescriptor FD)
 /* Opens a file for reading and writing on the currently mounted file system. Creates a dynamic resource table entry for the file (the structure that tracks open files, the internal file pointer, etc.), and returns a file descriptor (integer) that can be used to reference this file while the filesystem is mounted. */
 fileDescriptor tfs_openFile(char *name)
 {
-    // check if there is a disk mounted
-    if (mountDisk == DISK_UNMOUNTED)
+    Block_FS superblock[BLOCKSIZE];
+    void *inode;
+    char *dst;
+    int i, filesOnDisk;
+    fileDescriptor idx;
+
+    if (readBlock(cur_disk, 0, superblock) < 0)
     {
-        return NO_MOUNTED_ERR;
+        return FILEO_ERR;
     }
 
-    // check if the file is already opened
+    if (superblock->block[0] != SUPERBLOCK_CODE)
+    {
+        return WRONG_BLOCK_CODE_ERR;
+    }
 
-    return 0;
+    if (superblock->block[1] != MAGICNUMBER)
+    {
+        return MAGICNUM_INVALID_ERR;
+    }
+
+    return OPEN_FILE_ERR;
 }
 
 /* Writes buffer ‘buffer’ of size ‘size’, which represents an entire file’s contents, to the file described by ‘FD’. Sets the file pointer to 0 (the start of file) when done. Returns success/error codes. */
