@@ -203,6 +203,18 @@ int fd_seek(fileDescriptor FD)
     return -1;
 }
 
+/* Closes the file and removes dynamic resource table entry */
+int tfs_close(fileDescriptor FD)
+{
+    int i = fd_seek(FD);
+    if (i < 0)
+    {
+        return FILE_NOT_FOUND_ERR;
+    }
+    resourceTable[i].fd = -1;
+    return SUCCESS;
+}
+
 /* Opens a file for reading and writing on the currently mounted file system. Creates a dynamic resource table entry for the file (the structure that tracks open files, the internal file pointer, etc.), and returns a file descriptor (integer) that can be used to reference this file while the filesystem is mounted. */
 fileDescriptor tfs_openFile(char *name)
 {
@@ -217,15 +229,15 @@ fileDescriptor tfs_openFile(char *name)
     return 0;
 }
 
-/* Closes the file and removes dynamic resource table entry */
-int tfs_close(fileDescriptor FD)
+/* change the file pointer location to offset (absolute). Returns success/error codes.*/
+int tfs_seek(fileDescriptor FD, int offset)
 {
     int i = fd_seek(FD);
     if (i < 0)
     {
         return FILE_NOT_FOUND_ERR;
     }
-    resourceTable[i].fd = -1;
+    resourceTable[i].file_ptr = offset;
     return SUCCESS;
 }
 
@@ -245,18 +257,6 @@ int tfs_delete(fileDescriptor FD)
 int tfs_readByte(fileDescriptor FD, char *buffer)
 {
     return 0;
-}
-
-/* change the file pointer location to offset (absolute). Returns success/error codes.*/
-int tfs_seek(fileDescriptor FD, int offset)
-{
-    int i = fd_seek(FD);
-    if (i < 0)
-    {
-        return FILE_NOT_FOUND_ERR;
-    }
-    resourceTable[i].file_ptr = offset;
-    return SUCCESS;
 }
 
 int tfs_rename(fileDescriptor FD, char *newName)
