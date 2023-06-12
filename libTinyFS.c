@@ -9,6 +9,7 @@
 #include "libDisk.h"
 #include "ERRORNO.h"
 
+// disk mounted or unmounted status
 #define DISK_MOUNTED 1
 #define DISK_UNMOUNTED -1
 
@@ -52,6 +53,7 @@ int tfs_mkfs(char *filename, int nBytes)
     {
         uint8_t block[BLOCKSIZE];
 
+        // write block
         if (writeBlock(fd, i, block) < 0)
         {
             return FILEW_ERR;
@@ -108,7 +110,10 @@ int tfs_unmount(void)
 }
 
 /* Opens a file for reading and writing on the currently mounted file system. Creates a dynamic resource table entry for the file (the structure that tracks open files, the internal file pointer, etc.), and returns a file descriptor (integer) that can be used to reference this file while the filesystem is mounted. */
-fileDescriptor tfs_openFile(char *name);
+fileDescriptor tfs_openFile(char *name)
+{
+    return 0;
+}
 
 /* Closes the file and removes dynamic resource table entry */
 int tfs_close(fileDescriptor FD)
