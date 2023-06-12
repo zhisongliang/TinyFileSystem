@@ -203,6 +203,18 @@ int fd_seek(fileDescriptor FD)
     return -1;
 }
 
+/* change the file pointer location to offset (absolute). Returns success/error codes.*/
+int tfs_seek(fileDescriptor FD, int offset)
+{
+    int i = fd_seek(FD);
+    if (i < 0)
+    {
+        return FILE_NOT_FOUND_ERR;
+    }
+    resourceTable[i].file_ptr = offset;
+    return SUCCESS;
+}
+
 /* Closes the file and removes dynamic resource table entry */
 int tfs_close(fileDescriptor FD)
 {
@@ -227,18 +239,6 @@ fileDescriptor tfs_openFile(char *name)
     // check if the file is already opened
 
     return 0;
-}
-
-/* change the file pointer location to offset (absolute). Returns success/error codes.*/
-int tfs_seek(fileDescriptor FD, int offset)
-{
-    int i = fd_seek(FD);
-    if (i < 0)
-    {
-        return FILE_NOT_FOUND_ERR;
-    }
-    resourceTable[i].file_ptr = offset;
-    return SUCCESS;
 }
 
 /* Writes buffer ‘buffer’ of size ‘size’, which represents an entire file’s contents, to the file described by ‘FD’. Sets the file pointer to 0 (the start of file) when done. Returns success/error codes. */
