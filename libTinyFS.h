@@ -3,6 +3,10 @@
 
 /* used for detecting when the disk has a formatted file system available to be mounted. It is to be found exactly on the first byte of the superblock */
 #define MAGICNUMBER 0x5A
+#define SUPERBLOCK_IDX 0x00
+#define ROOT_INODE_IDX 0x01
+#define MAX_OPEN_FILE_NUM 20
+#define MAX_FILE_NAME_LEN 8
 
 /* The default size of the disk and file system block */
 #define BLOCKSIZE 256
